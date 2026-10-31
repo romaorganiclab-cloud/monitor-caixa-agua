@@ -1,6 +1,6 @@
-//#include <RunningMedian.h>
 #include <NewPing.h>
 #include <math.h>
+#include <time.h>
 #include "thingProperties.h"
 
 // --- Definição dos Pinos ---
@@ -47,6 +47,13 @@ const int LEITURAS_CONSECUTIVAS_ABRIR = 3;
 const int LEITURAS_CONSECUTIVAS_FECHAR_AUTO = 3;
 const int LEITURAS_CONSECUTIVAS_FECHAR_SEGURANCA = 2;
 
+// Um ponto a cada 10 min, no mesmo periodo da variavel nivel_serie.
+const unsigned long INTERVALO_SERIE_MS = 600000UL;
+const float NUDGE_SERIE = 0.01f;
+const int NIVEL_MINIMO_MANHA = 95;
+const int HORA_CHECAGEM_MANHA = 7;
+const int JANELA_CHECAGEM_MIN = 30;
+
 bool filtro_inicializado = false;
 float ultimo_nivel_bruto_aceito = 0.0;
 float nivel_filtrado = 0.0;
@@ -56,6 +63,8 @@ int leituras_aceitas = 0;
 int contagem_confirmacao_abertura = 0;
 int contagem_confirmacao_fechamento_auto = 0;
 int contagem_confirmacao_fechamento_seg = 0;
+unsigned long slot_serie_publicado = 0xFFFFFFFFUL;
+unsigned long dia_checagem_publicado = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -83,6 +92,8 @@ void loop() {
     ultimo_tempo_medicao = millis();
     medirNivelComFiltro();
     verificarAlarmes();
+    publicarNivelSerie();
+    verificarChecagemMatinal();
   }
 }
 
@@ -257,6 +268,63 @@ void verificarAlarmes() {
   }
 }
 
+
+void publicarNivelSerie() {
+  if (!filtro_inicializado) return;
+
+  unsigned long slot = millis() / INTERVALO_SERIE_MS;
+  if (slot == slot_serie_publicado) return;
+  slot_serie_publicado = slot;
+
+  float amostra = constrain(nivel_filtrado, 0.0f, 100.0f);
+  // O grafico descarta amostra repetida. O 0,01 alternado força um ponto
+  // novo a cada 10 min mesmo com a caixa parada. Em 100% o ajuste vai para baixo.
+  if ((slot % 2UL) == 1UL) {
+    if (amostra <= (100.0f - NUDGE_SERIE)) amostra += NUDGE_SERIE;
+    else amostra -= NUDGE_SERIE;
+  }
+
+  nivel_serie = amostra;
+  Serial.print("Serie nivel: ");
+  Serial.println(nivel_serie, 2);
+}
+
+void verificarChecagemMatinal() {
+  if (!filtro_inicializado || !ArduinoCloud.connected()) return;
+
+  unsigned long local = ArduinoCloud.getLocalTime();
+  if (local < 1700000000UL) return;
+
+  unsigned long dia = local / 86400UL;
+  if (dia == dia_checagem_publicado) return;
+
+  unsigned long segundos = local % 86400UL;
+  int hora = segundos / 3600UL;
+  int minuto = (segundos % 3600UL) / 60UL;
+  if (hora != HORA_CHECAGEM_MANHA || minuto > JANELA_CHECAGEM_MIN) return;
+
+  // Trava o dia na primeira leitura valida da janela, mesmo com a caixa cheia.
+  // Uma queda depois das 7h (banho, cozinha) nao pode parecer falta de abastecimento.
+  dia_checagem_publicado = dia;
+  if (nivel_percentual >= NIVEL_MINIMO_MANHA) {
+    Serial.println("Checagem 7h: caixa abastecida.");
+    return;
+  }
+
+  time_t instante = (time_t)local;
+  struct tm partes;
+  gmtime_r(&instante, &partes);
+  char data[12];
+  snprintf(data, sizeof(data), "%02d/%02d/%04d", partes.tm_mday, partes.tm_mon + 1, partes.tm_year + 1900);
+
+  mensagem_manha = data;
+  mensagem_manha += " 07h: caixa em ";
+  mensagem_manha += nivel_percentual;
+  mensagem_manha += "%. A concessionaria provavelmente nao abasteceu esta noite.";
+
+  Serial.print("Checagem 7h: ");
+  Serial.println(mensagem_manha);
+}
 
 /*
   Since AbrirValvula is READ_WRITE variable, onAbrirValvulaChange() is
