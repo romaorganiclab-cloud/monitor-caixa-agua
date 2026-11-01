@@ -8,6 +8,51 @@ The phone must be nearby with Garmin Connect Mobile connected over Bluetooth. If
 
 The glance shows that saved percentage and does not use the network.
 
+## Cloud calls
+
+Every call leaves the watch through Garmin Connect on the phone. The watch sends only one request at a time, and waits about 100 ms before the next one. A tap outside the Naciente label sends nothing. The upper button repeats the open sequence.
+
+Opening Caixa reads the tank. The token call runs only when the saved token is missing or close to expiring.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Watch as Venu 3
+    participant Cloud as Arduino IoT Cloud
+
+    User->>Watch: Open Caixa
+    opt Saved token is missing or expired
+        Watch->>Cloud: POST /iot/v1/clients/token
+        Cloud-->>Watch: access_token
+    end
+    Watch->>Cloud: GET /iot/v2/things/thingId/properties
+    Cloud-->>Watch: nivel_percentual and abrir_valvula
+```
+
+Tapping **Abrir Naciente** or **Fechar Naciente** writes the valve, then reads the properties again. The body is `{"value": 1}` to open and `{"value": 0}` to close. The extra property read is skipped when the app already knows the property ids from the open.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Watch as Venu 3
+    participant Cloud as Arduino IoT Cloud
+
+    User->>Watch: Tap Abrir or Fechar Naciente
+    opt Saved token is missing or expired
+        Watch->>Cloud: POST /iot/v1/clients/token
+        Cloud-->>Watch: access_token
+    end
+    opt Property ids are not known yet
+        Watch->>Cloud: GET /iot/v2/things/thingId/properties
+        Cloud-->>Watch: ids for nivel_percentual and abrir_valvula
+    end
+    Watch->>Cloud: PUT /properties/abrir_valvula/publish
+    Note right of Watch: value 1 opens, value 0 closes
+    Cloud-->>Watch: 200 with an empty body
+    Watch->>Cloud: GET /iot/v2/things/thingId/properties
+    Cloud-->>Watch: last_value of the valve
+```
+
 ## Cloud credentials
 
 1. In [Arduino Cloud](https://app.arduino.cc/), open the Thing and copy its Thing id. That id is not `DEVICE_LOGIN_NAME` from `thingProperties.h`.
@@ -57,6 +102,6 @@ Sideload `bin/Caixa-venu3.prg` (copy it to `GARMIN/Apps` over USB, or use the Co
 
 - The big number follows the tank LEDs: green at or above 70%, yellow from 30% up to 70%, red below 30%.
 - **Naciente** is `Aberta` or `Fechada`.
-- Tap the upper half to refresh. The select button also refreshes.
-- Tap the lower half, then **Sim**, to toggle the valve. **Não** or Back cancels.
-- While opening, the confirm screen says the valve stays open until you close it or the tank reaches 98%.
+- Tap **Abrir Naciente** or **Fechar Naciente**. The screen shows `enviando...` and the inlet opens or closes.
+- A short press of the upper button refreshes the level. A tap anywhere else does nothing.
+- Swipe right, or press the lower button, to leave the app. That does not change the valve.
