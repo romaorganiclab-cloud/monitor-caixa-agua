@@ -74,6 +74,10 @@ The phone notification is an Arduino Cloud trigger, not code in the sketch:
 
 If the board is offline for the whole 07:00–07:30 window, that morning is skipped.
 
+## Garmin Venu 3
+
+The `garmin/` folder is a personal Connect IQ app for a Venu 3. It reads `nivel_percentual` and toggles `abrir_valvula` through the Arduino IoT Cloud API, the same variable the dashboard switch uses. Build and sideload steps are in [garmin/README.md](garmin/README.md).
+
 ## Libraries
 
 - [ArduinoIoTCloud](https://github.com/arduino-libraries/ArduinoIoTCloud)
