@@ -1,0 +1,5 @@
+.env
+garmin/source/Secrets.mc
+garmin/developer_key.pem
+garmin/developer_key.der
+garmin/bin/

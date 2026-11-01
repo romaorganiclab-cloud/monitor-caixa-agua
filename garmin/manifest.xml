@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application entry="CaixaApp" id="a7c31e04-5b29-4d6e-8f10-6c4e2a9b71d5" name="@Strings.AppName" type="watch-app" launcherIcon="@Drawables.LauncherIcon" minApiLevel="5.2.0">
+        <iq:products>
+            <iq:product id="venu3"/>
+            <iq:product id="venu3s"/>
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="Communications"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>por</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>

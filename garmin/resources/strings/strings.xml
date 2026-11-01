@@ -1,0 +1,27 @@
+<strings>
+    <string id="AppName">Caixa</string>
+    <string id="Naciente">Naciente</string>
+    <string id="AbrirNaciente">Abrir Naciente</string>
+    <string id="FecharNaciente">Fechar Naciente</string>
+    <string id="Aberta">Aberta</string>
+    <string id="Fechada">Fechada</string>
+    <string id="AbrirPergunta">Abrir a Naciente?</string>
+    <string id="FecharPergunta">Fechar a Naciente?</string>
+    <string id="AvisoLinha1">Aberta até você fechar</string>
+    <string id="AvisoLinha2">ou até a caixa em 98%.</string>
+    <string id="Sim">Sim</string>
+    <string id="Nao">Não</string>
+    <string id="SemTelefone">sem telefone</string>
+    <string id="SemRede">sem rede</string>
+    <string id="AcessoNegado">acesso negado</string>
+    <string id="NaoEncontrado">thing não encontrado</string>
+    <string id="VariavelAusente">variável não encontrada</string>
+    <string id="RespostaInvalida">resposta inválida</string>
+    <string id="FalhaHttp">falha na nuvem</string>
+    <string id="Atualizando">atualizando...</string>
+    <string id="Enviando">enviando...</string>
+    <string id="SemConfirmacao">enviado, sem confirmação</string>
+    <string id="SemLeitura">sem leitura</string>
+    <string id="ToqueAlternar">toque para alternar</string>
+    <string id="NaoMudou">não mudou</string>
+</strings>
